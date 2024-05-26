@@ -35,35 +35,38 @@ def main():
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv'])
 
     if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.write("The first 5 rows of data:")
-        st.write(data.head())
+        try:
+            data = pd.read_csv(uploaded_file)
+            st.write("The first 5 rows of data:")
+            st.write(data.head())
 
-        X = data.iloc[:, :-1]
-        y = data.iloc[:, -1]
+            X = data.iloc[:, :-1]
+            y = data.iloc[:, -1]
 
-        # Convert categorical data to numerical
-        for col in X.columns:
-            X[col] = X[col].astype('category').cat.codes
-        y = y.astype('category').cat.codes
+            # Convert categorical data to numerical
+            for col in X.columns:
+                X[col] = X[col].astype('category').cat.codes
+            y = y.astype('category').cat.codes
 
-        # Split data into train and test sets
-        split_ratio = 0.8
-        indices = np.random.permutation(len(X))
-        train_size = int(len(X) * split_ratio)
-        train_idx, test_idx = indices[:train_size], indices[train_size:]
-        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+            # Split data into train and test sets
+            split_ratio = 0.8
+            indices = np.random.permutation(len(X))
+            train_size = int(len(X) * split_ratio)
+            train_idx, test_idx = indices[:train_size], indices[train_size:]
+            X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+            y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
-        # Train classifier
-        classifier = NaiveBayesClassifier()
-        classifier.fit(X_train.to_numpy(), y_train.to_numpy())
+            # Train classifier
+            classifier = NaiveBayesClassifier()
+            classifier.fit(X_train.to_numpy(), y_train.to_numpy())
 
-        # Predict and evaluate
-        y_pred = classifier.predict(X_test.to_numpy())
-        accuracy = np.mean(y_pred == y_test.to_numpy())
+            # Predict and evaluate
+            y_pred = classifier.predict(X_test.to_numpy())
+            accuracy = np.mean(y_pred == y_test.to_numpy())
 
-        st.write(f"Accuracy: {accuracy:.2f}")
+            st.write(f"Accuracy: {accuracy:.2f}")
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
