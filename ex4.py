@@ -1,44 +1,69 @@
-# import necessary libarities
+import streamlit as st
 import pandas as pd
-from sklearn import tree
-from sklearn.preprocessing import LabelEncoder
-from sklearn.naive_bayes import GaussianNB
+import numpy as np
 
-# load data from CSV
-data = pd.read_csv('tennisdata.csv')
-print("THe first 5 values of data is :\n",data.head())
+class NaiveBayesClassifier:
+    def fit(self, X, y):
+        self.classes = np.unique(y)
+        self.parameters = {}
+        
+        for i, c in enumerate(self.classes):
+            X_c = X[np.where(y == c)]
+            self.parameters[c] = {
+                'mean': X_c.mean(axis=0),
+                'var': X_c.var(axis=0),
+                'prior': X_c.shape[0] / X.shape[0]
+            }
 
-# obtain Train data and Train output
-X = data.iloc[:,:-1]
-print("\nThe First 5 values of train data is\n",X.head())
+    def predict(self, X):
+        posteriors = []
+        for x in X:
+            posteriors.append([self._posterior(x, c) for c in self.classes])
+        return self.classes[np.argmax(posteriors, axis=1)]
+    
+    def _posterior(self, x, c):
+        mean = self.parameters[c]['mean']
+        var = self.parameters[c]['var']
+        prior = self.parameters[c]['prior']
+        posterior = np.sum(-0.5 * np.log(2. * np.pi * var) - ((x - mean) ** 2) / (2. * var))
+        return posterior + np.log(prior)
 
-y = data.iloc[:,-1]
-print("\nThe first 5 values of Train output is\n",y.head())
+def main():
+    st.title("Tennis Data Classifier")
 
-# Convert then in numbers 
-le_outlook = LabelEncoder()
-X.Outlook = le_outlook.fit_transform(X.Outlook)
+    # File upload
+    uploaded_file = st.file_uploader("Upload CSV file", type=['csv'])
 
-le_Temperature = LabelEncoder()
-X.Temperature = le_Temperature.fit_transform(X.Temperature)
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+        st.write("The first 5 rows of data:")
+        st.write(data.head())
 
-le_Humidity = LabelEncoder()
-X.Humidity = le_Humidity.fit_transform(X.Humidity)
+        X = data.iloc[:, :-1]
+        y = data.iloc[:, -1]
 
-le_Windy = LabelEncoder()
-X.Windy = le_Windy.fit_transform(X.Windy)
+        # Convert categorical data to numerical
+        for col in X.columns:
+            X[col] = X[col].astype('category').cat.codes
+        y = y.astype('category').cat.codes
 
-print("\nNow the Train data is :\n",X.head())
+        # Split data into train and test sets
+        split_ratio = 0.8
+        indices = np.random.permutation(len(X))
+        train_size = int(len(X) * split_ratio)
+        train_idx, test_idx = indices[:train_size], indices[train_size:]
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
-le_PlayTennis = LabelEncoder()
-y = le_PlayTennis.fit_transform(y)
-print("\nNow the Train output is\n",y)
+        # Train classifier
+        classifier = NaiveBayesClassifier()
+        classifier.fit(X_train.to_numpy(), y_train.to_numpy())
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.20)
+        # Predict and evaluate
+        y_pred = classifier.predict(X_test.to_numpy())
+        accuracy = np.mean(y_pred == y_test.to_numpy())
 
-classifier = GaussianNB()
-classifier.fit(X_train,y_train)
+        st.write(f"Accuracy: {accuracy:.2f}")
 
-from sklearn.metrics import accuracy_score
-print("Accuracy is:",accuracy_score(classifier.predict(X_test),y_test))
+if _name_ == "_main_":
+    main()
