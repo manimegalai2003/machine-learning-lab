@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from collections import Counter
-from sklearn.model_selection import train_test_split  # Add this import
 
 # Load the Iris dataset
 def load_iris_dataset():
@@ -11,6 +10,16 @@ def load_iris_dataset():
     X = iris_data.iloc[:, :-1].values
     y = iris_data.iloc[:, -1].values
     return X, y
+
+# Custom train-test split function
+def custom_train_test_split(X, y, test_size=0.3, random_state=None):
+    if random_state:
+        np.random.seed(random_state)
+    indices = np.arange(X.shape[0])
+    np.random.shuffle(indices)
+    split_idx = int(X.shape[0] * (1 - test_size))
+    train_idx, test_idx = indices[:split_idx], indices[split_idx:]
+    return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
 
 # Custom KNN Classifier
 class KNNClassifier:
@@ -46,7 +55,7 @@ def main():
     k_value = st.sidebar.slider('Select K value:', 1, 10, 3)
 
     # Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X_train, X_test, y_train, y_test = custom_train_test_split(X, y, test_size=0.3, random_state=42)
 
     # Model training and prediction
     knn_classifier = KNNClassifier(k=k_value)
