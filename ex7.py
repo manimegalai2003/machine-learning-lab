@@ -1,9 +1,9 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.stats import multivariate_normal
+from sklearn.datasets import load_iris
 
 # Load Iris dataset manually
-from sklearn.datasets import load_iris
 iris = load_iris()
 X = iris.data
 y = iris.target
@@ -40,22 +40,3 @@ def gaussian_mixture(X, k, max_iters=100):
     pi = np.ones(k) / k
     means = X[np.random.choice(n, k, replace=False)]
     covs = np.array([np.eye(d)] * k)
-    for _ in range(max_iters):
-        densities = np.array([pi[i] * multivariate_normal.pdf(X, mean=means[i], cov=covs[i]) for i in range(k)]).T
-        responsibilities = densities / densities.sum(axis=1, keepdims=True)
-        new_means = np.array([responsibilities[:, i].dot(X) / responsibilities[:, i].sum() for i in range(k)])
-        new_covs = np.array([responsibilities[:, i].dot((X - new_means[i]).T.dot(X - new_means[i])) / responsibilities[:, i].sum() for i in range(k)])
-        new_pi = responsibilities.mean(axis=0)
-        if np.allclose(new_means, means) and np.allclose(new_covs, covs) and np.allclose(new_pi, pi):
-            break
-        means, covs, pi = new_means, new_covs, new_pi
-    return means, responsibilities.argmax(axis=1)
-
-means, predY_gmm = gaussian_mixture(X[:, 2:], 3)
-plt.subplot(1, 3, 3)
-plt.scatter(X[:, 2], X[:, 3], c=colormap[predY_gmm], s=40)
-plt.scatter(means[:, 0], means[:, 1], marker='*', s=200, c='orange')
-plt.title('GMM Classification')
-
-plt.tight_layout()
-plt.show()
