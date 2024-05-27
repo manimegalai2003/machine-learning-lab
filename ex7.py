@@ -1,9 +1,11 @@
+pip install numpy pandas matplotlib scikit-learn scipy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.stats import multivariate_normal
+from sklearn.datasets import load_iris
 
 # Load Iris dataset manually
-from sklearn.datasets import load_iris
 iris = load_iris()
 X = iris.data
 y = iris.target
@@ -44,7 +46,7 @@ def gaussian_mixture(X, k, max_iters=100):
         densities = np.array([pi[i] * multivariate_normal.pdf(X, mean=means[i], cov=covs[i]) for i in range(k)]).T
         responsibilities = densities / densities.sum(axis=1, keepdims=True)
         new_means = np.array([responsibilities[:, i].dot(X) / responsibilities[:, i].sum() for i in range(k)])
-        new_covs = np.array([responsibilities[:, i].dot((X - new_means[i]).T.dot(X - new_means[i])) / responsibilities[:, i].sum() for i in range(k)])
+        new_covs = np.array([np.dot((responsibilities[:, i] * (X - new_means[i])).T, X - new_means[i]) / responsibilities[:, i].sum() for i in range(k)])
         new_pi = responsibilities.mean(axis=0)
         if np.allclose(new_means, means) and np.allclose(new_covs, covs) and np.allclose(new_pi, pi):
             break
