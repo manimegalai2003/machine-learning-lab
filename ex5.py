@@ -4,6 +4,10 @@ from collections import Counter
 import math
 import streamlit as st
 
+# Title
+st.write("22AIA-MACHINE MASTERS")
+st.title("Sentiment Analysis with Multinomial Naive Bayes")
+
 # File uploader
 uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
@@ -66,7 +70,7 @@ if uploaded_file is not None:
     pred = clf.predict(Xtest_dm)
 
     # Print predictions
-    for doc, p in zip(Xtest, pred):  # Changed from Xtrain to Xtest
+    for doc, p in zip(Xtest, pred):
         p = 'pos' if p == 1 else 'neg'
         st.write(f"{doc} -> {p}")
 
